@@ -11,11 +11,19 @@ import (
 
 const hmacSize = 32
 
-type chacha20blake2s struct {
+type Chacha20blake2s struct {
 	key []byte
 }
 
-func (c *chacha20blake2s) Seal(plaintext []byte) (ciphertext []byte, err error) {
+func (c *Chacha20blake2s) NonceSize() int {
+	return chacha20.NonceSizeX
+}
+
+func (c *Chacha20blake2s) Overhead() int {
+	return hmacSize + chacha20.NonceSizeX
+}
+
+func (c *Chacha20blake2s) Seal(plaintext []byte) (ciphertext []byte, err error) {
 
 	nonce := make([]byte, chacha20.NonceSizeX, chacha20.NonceSizeX+len(plaintext)+hmacSize)
 	_, err = rand.Read(nonce)
@@ -44,7 +52,7 @@ func (c *chacha20blake2s) Seal(plaintext []byte) (ciphertext []byte, err error) 
 	return
 }
 
-func (c *chacha20blake2s) Open(ciphertext []byte) (plaintext []byte, err error) {
+func (c *Chacha20blake2s) Open(ciphertext []byte) (plaintext []byte, err error) {
 	if len(ciphertext) < hmacSize+chacha20.NonceSizeX {
 		return nil, errors.New("The input plaintext was too small")
 	}
@@ -76,12 +84,12 @@ func (c *chacha20blake2s) Open(ciphertext []byte) (plaintext []byte, err error) 
 	return
 }
 
-func New(key []byte) (c *chacha20blake2s, err error) {
+func New(key []byte) (c *Chacha20blake2s, err error) {
 	if len(key) != chacha20.KeySize {
 		return nil, errors.New("Key too small to use")
 	}
 
-	c = &chacha20blake2s{}
+	c = &Chacha20blake2s{}
 
 	c.key = key
 
