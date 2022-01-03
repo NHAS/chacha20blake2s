@@ -73,6 +73,9 @@ func (c *Chacha20blake2s) Open(ciphertext []byte) (plaintext []byte, err error) 
 	h.Write(ciphertext)
 	expected := h.Sum(nil)
 
+	// Must use constant time compare here to stop timing oracle attacks
+	// For each byte in the provided (and untrustworthy hmac) we compare, if we're using bytes.Compare then this will fail fast telling the attacker that they havent got some bytes correct
+	// However if the time increases notably, then the attacker knows they have some part of the sequence correct and so on
 	if subtle.ConstantTimeCompare(hmac, expected) != 1 {
 		return nil, errors.New("HMAC validation failed")
 	}
